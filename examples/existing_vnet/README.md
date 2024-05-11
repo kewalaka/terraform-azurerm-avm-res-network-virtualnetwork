@@ -73,13 +73,12 @@ resource "azurerm_virtual_network" "this" {
 module "existing_vnet" {
   source = "../../"
   existing_vnet = {
-    name = azurerm_virtual_network.this.name
+    id = azurerm_virtual_network.this.id
   }
+  # note the resource group for the subnet comes from the existing_vnet id, but this is kept so that the intention is explicit.
   resource_group_name = azurerm_resource_group.this.name
-  address_space       = ["10.0.0.0/16"]
   subnets             = local.subnets
   location            = azurerm_resource_group.this.location
-  name                = module.naming.virtual_network.name
 }
 
 ```
