@@ -69,7 +69,7 @@ resource "random_uuid" "role_assignment" {
 resource "azapi_resource" "role_assignment" {
   for_each = var.role_assignments
 
-  type = "Microsoft.Authorization/roleAssignments@2020-04-01-preview"
+  type = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
     properties = {
       principalId                        = each.value.principal_id
@@ -87,6 +87,12 @@ resource "azapi_resource" "role_assignment" {
   depends_on = [
     azapi_resource.subnet
   ]
+
+  lifecycle {
+    ignore_changes = [
+      name,
+    ]
+  }
 }
 
 resource "azapi_update_resource" "allow_multiple_address_prefixes_on_subnet" {
@@ -117,4 +123,9 @@ resource "azapi_update_resource" "enable_shared_vnet" {
     properties = {}
   }
   resource_id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Features/featureProviders/Microsoft.Network/subscriptionFeatureRegistrations/EnableSharedVNet"
+}
+
+moved {
+  from = azurerm_role_assignment.subnet
+  to   = azapi_resource.role_assignment
 }

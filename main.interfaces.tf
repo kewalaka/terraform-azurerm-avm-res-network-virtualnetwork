@@ -37,7 +37,7 @@ resource "random_uuid" "role_assignment" {
 resource "azapi_resource" "role_assignment" {
   for_each = var.role_assignments
 
-  type = "Microsoft.Authorization/roleAssignments@2020-04-01-preview"
+  type = "Microsoft.Authorization/roleAssignments@2022-04-01"
   body = {
     properties = {
       principalId                        = each.value.principal_id
@@ -55,6 +55,12 @@ resource "azapi_resource" "role_assignment" {
   depends_on = [
     azapi_resource.vnet
   ]
+
+  lifecycle {
+    ignore_changes = [
+      name,
+    ]
+  }
 }
 
 resource "azapi_resource" "diagnostic_setting" {
@@ -114,4 +120,14 @@ resource "azapi_resource" "diagnostic_setting" {
       location,
     ]
   }
+}
+
+moved {
+  from = azurerm_role_assignment.vnet_level
+  to   = azapi_resource.role_assignment
+}
+
+moved {
+  from = azurerm_monitor_diagnostic_setting.this
+  to   = azapi_resource.diagnostic_setting
 }
