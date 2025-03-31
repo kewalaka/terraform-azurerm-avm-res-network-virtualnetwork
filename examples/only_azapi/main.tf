@@ -39,50 +39,47 @@ module "naming" {
 # This is required for resource modules
 resource "azapi_resource" "resource_group" {
   type = "Microsoft.Resources/resourceGroups@2024-03-01"
-  name = module.naming.resource_group.name_unique
   body = {
     location   = module.regions.regions[random_integer.region_index.result].name
     properties = {}
   }
+  name = module.naming.resource_group.name_unique
 }
 
 #Creating a Route Table with a unique name in the specified location.
 resource "azapi_resource" "route_table" {
-  type      = "Microsoft.Network/routeTables@2024-05-01"
-  name      = module.naming.route_table.name_unique
-  location  = azapi_resource.resource_group.location
-  parent_id = azapi_resource.resource_group.id
-
+  type = "Microsoft.Network/routeTables@2024-05-01"
   body = {
     properties = {}
   }
+  location  = azapi_resource.resource_group.location
+  name      = module.naming.route_table.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 # Creating a DDoS Protection Plan in the specified location.
 resource "azapi_resource" "network_ddos_protection_plan" {
-  type      = "Microsoft.Network/ddosProtectionPlans@2024-05-01"
-  name      = module.naming.network_ddos_protection_plan.name_unique
-  location  = azapi_resource.resource_group.location
-  parent_id = azapi_resource.resource_group.id
-
+  type = "Microsoft.Network/ddosProtectionPlans@2024-05-01"
   body = {
     properties = {}
   }
+  location  = azapi_resource.resource_group.location
+  name      = module.naming.network_ddos_protection_plan.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 #Creating a NAT Gateway in the specified location.
 resource "azapi_resource" "nat_gateway" {
-  type      = "Microsoft.Network/natGateways@2024-05-01"
-  name      = module.naming.nat_gateway.name_unique
-  location  = azapi_resource.resource_group.location
-  parent_id = azapi_resource.resource_group.id
-
+  type = "Microsoft.Network/natGateways@2024-05-01"
   body = {
     sku = {
       name = "Standard"
     }
     properties = {}
   }
+  location  = azapi_resource.resource_group.location
+  name      = module.naming.nat_gateway.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 # Fetching the public IP address of the Terraform executor used for NSG
@@ -92,11 +89,7 @@ data "http" "public_ip" {
 }
 
 resource "azapi_resource" "network_security_group" {
-  type      = "Microsoft.Network/networkSecurityGroups@2024-05-01"
-  name      = module.naming.network_security_group.name_unique
-  location  = azapi_resource.resource_group.location
-  parent_id = azapi_resource.resource_group.id
-
+  type = "Microsoft.Network/networkSecurityGroups@2024-05-01"
   body = {
     properties = {
       securityRules = [
@@ -116,37 +109,34 @@ resource "azapi_resource" "network_security_group" {
       ]
     }
   }
+  location  = azapi_resource.resource_group.location
+  name      = module.naming.network_security_group.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 resource "azapi_resource" "user_assigned_identity" {
-  type      = "Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31"
-  name      = module.naming.user_assigned_identity.name_unique
-  parent_id = azapi_resource.resource_group.id
+  type = "Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31"
   body = {
     location = azapi_resource.resource_group.location
   }
+  name      = module.naming.user_assigned_identity.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 resource "azapi_resource" "storage_account" {
   type = "Microsoft.Storage/storageAccounts@2023-05-01"
-  name = module.naming.storage_account.name_unique
-
-  parent_id = azapi_resource.resource_group.id
-
   body = {
     location   = azapi_resource.resource_group.location
     sku        = { name = "Standard_ZRS" }
     kind       = "StorageV2"
     properties = {}
   }
+  name      = module.naming.storage_account.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 resource "azapi_resource" "subnet_service_endpoint_storage_policy" {
-  type      = "Microsoft.Network/serviceEndpointPolicies@2024-05-01"
-  name      = "sep-${module.naming.unique-seed}"
-  location  = azapi_resource.resource_group.location
-  parent_id = azapi_resource.resource_group.id
-
+  type = "Microsoft.Network/serviceEndpointPolicies@2024-05-01"
   body = {
     properties = {
       serviceEndpointPolicyDefinitions = [
@@ -164,14 +154,14 @@ resource "azapi_resource" "subnet_service_endpoint_storage_policy" {
       ]
     }
   }
+  location  = azapi_resource.resource_group.location
+  name      = "sep-${module.naming.unique-seed}"
+  parent_id = azapi_resource.resource_group.id
 }
 
 
 resource "azapi_resource" "log_analytics_workspace" {
-  type      = "Microsoft.OperationalInsights/workspaces@2023-09-01"
-  name      = module.naming.log_analytics_workspace.name_unique
-  parent_id = azapi_resource.resource_group.id
-
+  type = "Microsoft.OperationalInsights/workspaces@2023-09-01"
   body = {
     location = azapi_resource.resource_group.location
     properties = {
@@ -180,6 +170,8 @@ resource "azapi_resource" "log_analytics_workspace" {
       }
     }
   }
+  name      = module.naming.log_analytics_workspace.name_unique
+  parent_id = azapi_resource.resource_group.id
 }
 
 #Defining the first virtual network (vnet-1) with its subnets and settings.
