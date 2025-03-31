@@ -1,7 +1,7 @@
 <!-- BEGIN_TF_DOCS -->
-# Example of using teh singular address prefix on a subnet
+# Example with network interface
 
-Some Azure resource types don't support the addressPrefix array, so we need to support the singular option too.
+This shows what happens if you associate a NIC with a subnet and tests for idempotency.
 
 ```hcl
 terraform {
@@ -52,6 +52,7 @@ resource "azurerm_resource_group" "this" {
   name     = module.naming.resource_group.name_unique
 }
 
+# Creating a virtual network with a unique name, telemetry settings, and in the specified resource group and location.
 module "vnet" {
   source              = "../../"
   name                = module.naming.virtual_network.name
@@ -59,42 +60,27 @@ module "vnet" {
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 
-  address_space = ["10.0.0.0/16"]
   subnets = {
-    subnet1 = {
-      name                            = "subnet1"
-      address_prefix                  = "10.0.0.0/24"
-      default_outbound_access_enabled = true
-      delegation = [{
-        name = "aca_delegation"
-        service_delegation = {
-          name    = "Microsoft.App/environments"
-          actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
-        }
-      }]
+    test = {
+      address_prefixes = ["10.0.0.0/16"]
+      name             = "subnet0"
     }
   }
+
+  address_space = ["10.0.0.0/16"]
 }
 
-/* # NOTE: This resource take a long time to create and destroy, so we are removing from e2e tests.
-resource "azurerm_container_app_environment" "aca" {
-  name                       = module.naming.container_app_environment.name
-  location                   = azurerm_resource_group.this.location
-  resource_group_name        = azurerm_resource_group.this.name
+resource "azurerm_network_interface" "test" {
+  location            = azurerm_resource_group.this.location
+  name                = "nic-${module.naming.virtual_network.name}"
+  resource_group_name = azurerm_resource_group.this.name
 
-  infrastructure_resource_group_name = "${module.naming.resource_group.name_unique}-aca"
-  infrastructure_subnet_id           = module.vnet.subnets["subnet1"].resource_id
-  internal_load_balancer_enabled = true
-
-  workload_profile {
-    name = "Consumption"
-    workload_profile_type  = "Consumption"
-    maximum_count = 1
-    minimum_count = 0
+  ip_configuration {
+    name                          = "ipconfig0"
+    private_ip_address_allocation = "Dynamic"
+    subnet_id                     = module.vnet.subnets["test"].resource_id
   }
-  zone_redundancy_enabled = false
 }
-*/
 ```
 
 <!-- markdownlint-disable MD033 -->
@@ -112,6 +98,7 @@ The following requirements are needed by this module:
 
 The following resources are used by this module:
 
+- [azurerm_network_interface.test](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_interface) (resource)
 - [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) (resource)
 - [random_integer.region_index](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/integer) (resource)
 

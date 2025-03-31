@@ -54,5 +54,24 @@ module "vnet" {
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 
+  subnets = {
+    test = {
+      address_prefixes = ["10.0.0.0/16"]
+      name             = "subnet0"
+    }
+  }
+
   address_space = ["10.0.0.0/16"]
+}
+
+resource "azurerm_network_interface" "test" {
+  location            = azurerm_resource_group.this.location
+  name                = "nic-${module.naming.virtual_network.name}"
+  resource_group_name = azurerm_resource_group.this.name
+
+  ip_configuration {
+    name                          = "ipconfig0"
+    private_ip_address_allocation = "Dynamic"
+    subnet_id                     = module.vnet.subnets["test"].resource_id
+  }
 }
