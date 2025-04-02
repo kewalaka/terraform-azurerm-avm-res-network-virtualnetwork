@@ -2,11 +2,10 @@ module "avm_interfaces" {
   source  = "Azure/avm-utl-interfaces/azure"
   version = "0.2.0"
 
+  diagnostic_settings              = var.diagnostic_settings
   lock                             = var.lock
   role_assignments                 = var.role_assignments
   role_assignment_definition_scope = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
-
-  diagnostic_settings = var.diagnostic_settings
 }
 
 resource "azapi_resource" "role_assignment" {
