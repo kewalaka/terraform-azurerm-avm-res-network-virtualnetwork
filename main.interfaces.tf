@@ -8,7 +8,7 @@ module "avm_interfaces" {
   role_assignment_definition_scope = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
 }
 
-resource "azapi_resource" "role_assignment" {
+resource "azapi_resource" "role_assignments" {
   for_each = module.avm_interfaces.role_assignments_azapi
 
   type      = each.value.type
@@ -16,6 +16,12 @@ resource "azapi_resource" "role_assignment" {
   locks     = [azapi_resource.vnet.id]
   name      = each.value.name
   parent_id = azapi_resource.vnet.id
+
+  lifecycle {
+    ignore_changes = [
+      name,
+    ]
+  }
 }
 
 resource "azapi_resource" "diagnostic_settings" {
@@ -50,10 +56,10 @@ resource "azapi_resource" "lock" {
 
 moved {
   from = azurerm_role_assignment.vnet_level
-  to   = azapi_resource.role_assignment
+  to   = azapi_resource.role_assignments
 }
 
 moved {
   from = azurerm_monitor_diagnostic_setting.this
-  to   = azapi_resource.diagnostic_setting
+  to   = azapi_resource.diagnostic_settings
 }
