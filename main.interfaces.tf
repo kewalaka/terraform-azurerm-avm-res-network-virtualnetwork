@@ -1,65 +1,65 @@
-# Applying Management Lock to the Virtual Network if specified.
-resource "azurerm_management_lock" "this" {
-  count = (var.lock != null ? 1 : 0)
+module "avm_interfaces" {
+  source  = "Azure/avm-utl-interfaces/azure"
+  version = "0.2.0"
 
-  lock_level = var.lock.kind
-  name       = coalesce(var.lock.name, "lock-${var.lock.kind}")
-  scope      = azapi_resource.vnet.id
-  notes      = var.lock.kind == "CanNotDelete" ? "Cannot delete the resource or its child resources." : "Cannot delete or modify the resource or its child resources."
-
-  depends_on = [
-    azapi_resource.vnet
-  ]
+  diagnostic_settings              = var.diagnostic_settings
+  lock                             = var.lock
+  role_assignments                 = var.role_assignments
+  role_assignment_definition_scope = "/subscriptions/${data.azapi_client_config.this.subscription_id}"
 }
 
-resource "azurerm_role_assignment" "vnet_level" {
-  for_each = var.role_assignments
+resource "azapi_resource" "role_assignments" {
+  for_each = module.avm_interfaces.role_assignments_azapi
 
-  principal_id                           = each.value.principal_id
-  scope                                  = azapi_resource.vnet.id
-  condition                              = each.value.condition
-  condition_version                      = each.value.condition_version
-  delegated_managed_identity_resource_id = each.value.delegated_managed_identity_resource_id
-  role_definition_id                     = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? each.value.role_definition_id_or_name : null
-  role_definition_name                   = strcontains(lower(each.value.role_definition_id_or_name), lower(local.role_definition_resource_substring)) ? null : each.value.role_definition_id_or_name
-  skip_service_principal_aad_check       = each.value.skip_service_principal_aad_check
+  type      = each.value.type
+  body      = each.value.body
+  locks     = [azapi_resource.vnet.id]
+  name      = each.value.name
+  parent_id = azapi_resource.vnet.id
 
-  depends_on = [
-    azapi_resource.vnet
-  ]
+  lifecycle {
+    ignore_changes = [
+      name,
+    ]
+  }
 }
 
-resource "azurerm_monitor_diagnostic_setting" "this" {
-  for_each = var.diagnostic_settings
+resource "azapi_resource" "diagnostic_settings" {
+  for_each = module.avm_interfaces.diagnostic_settings_azapi
 
-  name                           = each.value.name != null ? each.value.name : "diag-${var.name}"
-  target_resource_id             = azapi_resource.vnet.id
-  eventhub_authorization_rule_id = each.value.event_hub_authorization_rule_resource_id
-  eventhub_name                  = each.value.event_hub_name
-  log_analytics_destination_type = each.value.log_analytics_destination_type == "Dedicated" ? null : each.value.log_analytics_destination_type
-  log_analytics_workspace_id     = each.value.workspace_resource_id
-  partner_solution_id            = each.value.marketplace_partner_resource_id
-  storage_account_id             = each.value.storage_account_resource_id
+  type      = each.value.type
+  body      = each.value.body
+  locks     = [azapi_resource.vnet.id]
+  name      = each.value.name
+  parent_id = azapi_resource.vnet.id
+  # in order for 'location' to be accepted within the lifecycle block, schema validation must be turned off :-(
+  schema_validation_enabled = false
 
-  dynamic "enabled_log" {
-    for_each = each.value.log_categories
-
-    content {
-      category = enabled_log.value
-    }
+  # ref: ignoring the location is required due to a spec bug upstream in the REST API, ref: https://github.com/Azure/terraform-provider-azapi/issues/655
+  # the resource will be created ok, but without this set there is a diff on every apply
+  lifecycle {
+    ignore_changes = [
+      location,
+    ]
   }
-  dynamic "enabled_log" {
-    for_each = each.value.log_groups
+}
 
-    content {
-      category_group = enabled_log.value
-    }
-  }
-  dynamic "metric" {
-    for_each = each.value.metric_categories
+resource "azapi_resource" "lock" {
+  count = module.avm_interfaces.lock_azapi != null ? 1 : 0
 
-    content {
-      category = metric.value
-    }
-  }
+  type      = lookup(module.avm_interfaces.lock_azapi, "type", null)
+  body      = lookup(module.avm_interfaces.lock_azapi, "body", null)
+  locks     = [azapi_resource.vnet.id]
+  name      = lookup(module.avm_interfaces.lock_azapi, "name", null)
+  parent_id = azapi_resource.vnet.id
+}
+
+moved {
+  from = azurerm_role_assignment.vnet_level
+  to   = azapi_resource.role_assignments
+}
+
+moved {
+  from = azurerm_monitor_diagnostic_setting.this
+  to   = azapi_resource.diagnostic_settings
 }
