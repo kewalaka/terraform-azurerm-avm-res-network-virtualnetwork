@@ -139,7 +139,10 @@ resource "azurerm_log_analytics_workspace" "this" {
 
 #Defining the first virtual network (vnet-1) with its subnets and settings.
 module "vnet1" {
-  source              = "../../"
+  source = "../../"
+  # source  = "Azure/avm-res-network-virtualnetwork/azurerm"
+  # version = "0.8.1"
+
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
   name                = module.naming.virtual_network.name_unique
@@ -224,7 +227,10 @@ module "vnet1" {
 }
 
 module "vnet2" {
-  source              = "../../"
+  source = "../../"
+  # source  = "Azure/avm-res-network-virtualnetwork/azurerm"
+  # version = "0.8.1"
+
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
   name                = "${module.naming.virtual_network.name_unique}2"
